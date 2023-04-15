@@ -162,7 +162,7 @@ def download_translation(translation_url):
         return False
 
     translation = m.group(1)
-    if translation not in ('kj', 'de', 'vt'):
+    if translation not in ('kj', 'de', 'vt', 'fi', 'se'):
         print('Skipping uninteresting translation ', translation)
         return False
 
@@ -186,8 +186,7 @@ def download_translation(translation_url):
 def download_all():
     for translation in RootParser(ROOT_URL).run():
         found = download_translation(translation)
-        if found:
-            return
+
 
 def main():
     download_all()
