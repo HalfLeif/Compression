@@ -2,6 +2,7 @@ import itertools
 import re
 import requests
 import threading
+import os.path
 
 from html.parser import HTMLParser
 
@@ -27,7 +28,7 @@ class Accumulator(HTMLParser):
         # print('success')
 
         # Note: web_root.encoding says ISO-8859-1, but that's wrong.
-        s = web_root.content.decode('utf-8')
+        s = web_root.content.decode('utf-8', 'ignore')
         self.feed(s)
         return self.result
 
@@ -158,7 +159,12 @@ def download_translation(translation_url):
     if not m:
         print('ERROR: no match for ', translation_url)
         return False
+
     translation = m.group(1)
+    out_file_path = f'data/{translation}.txt'
+    if os.path.isfile(out_file_path):
+        # Already downloaded this one
+        return False
 
     book_urls = BookParser(translation_url).run()
     if not book_urls:
@@ -166,7 +172,7 @@ def download_translation(translation_url):
         return False
 
     contents = download_books(book_urls)
-    with open(f'data/{translation}.txt', 'w', encoding='utf-8') as out:
+    with open(out_file_path, 'w', encoding='utf-8') as out:
         for content in contents:
             out.write(content)
     return True
