@@ -10,6 +10,8 @@ assert RE_BOOK_URL.match('bibles/no/index.htm')
 
 RE_SUB_BOOK_URL = re.compile('^[0-9]+/[0-9]+.htm')
 
+RE_WHITESPACE_ONLY = re.compile('^\\s+$')
+assert RE_WHITESPACE_ONLY.match('\r\n  ')
 
 class Accumulator(HTMLParser):
     def __init__(self, root_url):
@@ -21,17 +23,16 @@ class Accumulator(HTMLParser):
         print(f'downloading {self.root_url}')
         web_root = requests.get(self.root_url)
         print('success')
-        self.feed(str(web_root.content))
+
+        # Note: web_root.encoding says ISO-8859-1, but that's wrong.
+        s = web_root.content.decode('utf-8')
+        self.feed(s)
         return self.result
 
-    # def handle_starttag(self, tag, attrs):
-    #     return
-
-    # def handle_endtag(self, tag):
-    #     print("Encountered an end tag :", tag)
-
-    # def handle_data(self, data):
-    #     print("Encountered some data  :", data)
+    # Methods to override from HTMLParser:
+    #   def handle_starttag(self, tag, attrs):
+    #   def handle_endtag(self, tag):
+    #   def handle_data(self, data):
 
 
 class RootParser(Accumulator):
@@ -73,8 +74,22 @@ class ChapterParser(Accumulator):
 
 
 class VerseParser(Accumulator):
+    def __init__(self, root_url):
+        Accumulator.__init__(self, root_url)
+        self.capture = False
+
     def handle_starttag(self, tag, attrs):
-        pass
+        d = dict(attrs)
+        if d.get('class') == 'dimver':
+            self.capture = True
+        elif tag == 'div':
+            self.capture = False
+
+    def handle_data(self, data):
+        if RE_WHITESPACE_ONLY.match(data):
+            return
+        if self.capture:
+            print(data)
 
 
 def download():
@@ -84,8 +99,15 @@ def download():
     # book = BookParser('https://www.wordproject.org/bibles/de/index.htm')
     # sub_books = book.run()
 
-    chapter = ChapterParser('https://www.wordproject.org/bibles/de/24/1.htm')
-    chapter.run()
+    # chapter = ChapterParser('https://www.wordproject.org/bibles/de/24/1.htm')
+    # chapter.run()
+
+    verse = VerseParser('https://www.wordproject.org/bibles/de/24/43.htm#0')
+    verse.run()
+
+    # data = b'Nimm gro\\xc3\\x9fe Steine und vergrabe sie in dem Boden am Eingang des Hauses des Pharao in Tachpanches, so da\\xc3\\x9f die M\\xc3\\xa4nner aus Juda es sehen, \\r\\n'
+    # # print(data)
+    # print(data.decode('utf-8', 'strict'))
 
 
 def main():
