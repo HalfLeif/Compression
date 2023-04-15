@@ -126,12 +126,14 @@ class ThreadBundle():
 
 
 def download_chapter(chapter_url):
+    '''Given url, returns list of text.'''
     result = []
     VerseParser(chapter_url, lambda x: result.append(x)).run()
     return result
 
 
 def download_book(book_url):
+    '''Given url, returns generator of text.'''
     # Chapter 1
     chapter_urls = [book_url]
     # Fetch the other chapters:
@@ -139,7 +141,16 @@ def download_book(book_url):
 
     bundle = ThreadBundle()
     bundle.AddMany(chapter_urls, download_chapter)
-    return bundle.Join()
+    ls = bundle.Join()
+    return itertools.chain.from_iterable(ls)
+
+
+def download_books(book_urls):
+    '''Given url, returns generator of text.'''
+    bundle = ThreadBundle()
+    bundle.AddMany(book_urls, download_book)
+    ls = bundle.Join()
+    return itertools.chain.from_iterable(ls)
 
 
 def download_translation(translation_url):
@@ -154,18 +165,11 @@ def download_translation(translation_url):
         print('ERROR: no books found for', translation_url)
         return False
 
-    found = False
+    contents = download_books(book_urls)
     with open(f'data/{translation}.txt', 'w', encoding='utf-8') as out:
-        for book_url in book_urls:
-            ls = download_book(book_url)
-            if not ls:
-                print('ERROR: no data found for', book_url)
-                return False
-
-            content = ''.join(itertools.chain.from_iterable(ls))
+        for content in contents:
             out.write(content)
-            found = True
-    return found
+    return True
 
 
 def download_all():
