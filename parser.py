@@ -155,12 +155,17 @@ def download_books(book_urls):
 
 
 def download_translation(translation_url):
+    '''Downloads translation and stores it in data/.'''
     m = RE_TRANSLATION_URL.search(translation_url)
     if not m:
         print('ERROR: no match for ', translation_url)
         return False
 
     translation = m.group(1)
+    if translation not in ('kj', 'de', 'vt'):
+        print('Skipping uninteresting translation ', translation)
+        return False
+
     out_file_path = f'data/{translation}.txt'
     if os.path.isfile(out_file_path):
         # Already downloaded this one
@@ -182,7 +187,7 @@ def download_all():
     for translation in RootParser(ROOT_URL).run():
         found = download_translation(translation)
         if found:
-            return # TODO get all books
+            return
 
 def main():
     download_all()
