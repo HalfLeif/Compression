@@ -74,22 +74,23 @@ class ChapterParser(Accumulator):
 
 
 class VerseParser(Accumulator):
-    def __init__(self, root_url):
+    def __init__(self, root_url, callback_fn):
         Accumulator.__init__(self, root_url)
         self.capture = False
+        self.callback_fn = callback_fn
 
     def handle_starttag(self, tag, attrs):
         d = dict(attrs)
-        if d.get('class') == 'dimver':
+        if d.get('class') in ('textBody', 'textHeader'):
             self.capture = True
-        elif tag == 'div':
+        elif tag == 'div' or d.get('class') == 'chap':
             self.capture = False
 
     def handle_data(self, data):
         if RE_WHITESPACE_ONLY.match(data):
             return
         if self.capture:
-            print(data)
+            self.callback_fn(data)
 
 
 def download():
@@ -102,12 +103,8 @@ def download():
     # chapter = ChapterParser('https://www.wordproject.org/bibles/de/24/1.htm')
     # chapter.run()
 
-    verse = VerseParser('https://www.wordproject.org/bibles/de/24/43.htm#0')
+    verse = VerseParser('https://www.wordproject.org/bibles/de/24/43.htm#0', print)
     verse.run()
-
-    # data = b'Nimm gro\\xc3\\x9fe Steine und vergrabe sie in dem Boden am Eingang des Hauses des Pharao in Tachpanches, so da\\xc3\\x9f die M\\xc3\\xa4nner aus Juda es sehen, \\r\\n'
-    # # print(data)
-    # print(data.decode('utf-8', 'strict'))
 
 
 def main():
