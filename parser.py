@@ -96,22 +96,23 @@ class VerseParser(Accumulator):
 def download_book(book_url):
     m = RE_BOOK_URL.search(book_url)
     translation = m.group(1)
+    found_verse = False
     with open(f'data/{translation}.txt', 'w', encoding='utf-8') as out:
         for book_url in BookParser(book_url).run():
             for chapter_url in ChapterParser(book_url).run():
                 VerseParser(chapter_url, out.write).run()
-                return # TODO keep going
+                found_verse = True
+    return found_verse
 
 
-def download():
-    # root = RootParser(ROOT_URL)
-    # links = root.run()
-
-    # TODO all
-    download_book('https://www.wordproject.org/bibles/de/index.htm')
+def download_all():
+    for translation in RootParser(ROOT_URL).run():
+        found = download_book(translation)
+        if found:
+            return # TODO get all books
 
 
 def main():
-    download()
+    download_all()
 
 main()
